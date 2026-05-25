@@ -60,12 +60,47 @@ input[type=password]{width:100%;font-size:13px;border:1px solid #ddd;border-radi
 <div class="output-header">
 <div class="output-label">Your cover letter</div>
 <button class="copy-btn" onclick="copyText()">Copy</button>
-</div>
-<div class="output-text" id="outputText"></div>
-</div>
-</div>
-<script>
+</div><script>
 var tone='Professional';
 document.querySelectorAll('.tone-btn').forEach(function(btn){
 btn.addEventListener('click',function(){
-document.querySelectorAll('.tone-btn').forEach(functio
+document.querySelectorAll('.tone-btn').forEach(function(b){b.classList.remove('active');});
+btn.classList.add('active');
+tone=btn.getAttribute('data-tone');
+});
+});
+function generate(){
+var apiKey=document.getElementById('apiKey').value.trim();
+var job=document.getElementById('job').value.trim();
+var resume=document.getElementById('resume').value.trim();
+var errorBox=document.getElementById('errorBox');
+errorBox.style.display='none';
+if(!apiKey){showError('Please enter your OpenRouter API key.');return;}
+if(!job){showError('Please paste the job description.');return;}
+if(!resume){showError('Please paste your resume or background.');return;}
+var btn=document.getElementById('genBtn');
+btn.disabled=true;
+btn.innerHTML='Writing your cover letter...';
+document.getElementById('outputCard').style.display='none';
+var prompt='Write a tailored cover letter. Tone: '+tone+'. 3-4 paragraphs, address to Hiring Manager, under 350 words. Output ONLY the cover letter.\n\nJOB:\n'+job+'\n\nCANDIDATE:\n'+resume;
+fetch('https://openrouter.ai/api/v1/chat/completions',{
+method:'POST',
+headers:{'Content-Type':'application/json','Authorization':'Bearer '+apiKey,'HTTP-Referer':window.location.href,'X-Title':'CoverCraft AI'},
+body:JSON.stringify({model:'mistralai/mistral-7b-instruct:free',messages:[{role:'user',content:prompt}],max_tokens:800})
+}).then(function(response){
+return response.json().then(function(data){
+if(!response.ok){showError('API error: '+(data.error&&data.error.message?data.error.message:'Check your API key.'));return;}
+var text=data.choices[0].message.content.trim();
+document.getElementById('outputText').textContent=text;
+document.getElementById('outputCard').style.display='block';
+document.getElementById('outputCard').scrollIntoView({behavior:'smooth'});
+btn.disabled=false;
+btn.innerHTML='Generate cover letter';
+});
+}).catch(function(){
+showError('Network error. Try again.');
+btn.disabled=false;
+btn.innerHTML='Generate cove
+<div class="output-text" id="outputText"></div>
+</div>
+</div>
